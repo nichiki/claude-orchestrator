@@ -1,0 +1,26 @@
+wbs:
+  name: Mergeable Conflict Test
+  tasks:
+    - id: create-file
+      name: Create initial file
+      prompt: |
+        Create a file named test.txt with the following content:
+        ```
+        Line 1: Hello
+        Line 2: World
+        Line 3: Test
+        Line 4: Example
+        Line 5: End
+        ```
+    
+    - id: modify-line2
+      name: Modify line 2
+      depends_on: [create-file]
+      prompt: |
+        Modify test.txt: Change line 2 from "World" to "Universe" while keeping all other lines unchanged.
+    
+    - id: modify-line4
+      name: Modify line 4
+      depends_on: [create-file]
+      prompt: |
+        Modify test.txt: Change line 4 from "Example" to "Sample" while keeping all other lines unchanged.

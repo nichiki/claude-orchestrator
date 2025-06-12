@@ -1,0 +1,6 @@
+name: Mergeable Conflict Test
+description: Test shared context with mergeable changes
+
+execution:
+  output_dir: ./output
+  max_concurrent: 2

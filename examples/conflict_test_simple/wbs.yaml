@@ -1,0 +1,30 @@
+name: "Simple Conflict Test"
+description: "Simple test to force conflicts"
+execution:
+  shared_context: true
+phases:
+  - id: "test"
+    name: "Test Phase"
+    tasks:
+      - id: "create-file"
+        name: "Create initial file"
+        prompt: |
+          Create a file called test.txt with exactly this content:
+          Line 1: Hello
+          Line 2: World
+          Line 3: Test
+        dependencies: []
+      
+      - id: "modify-line2-a"
+        name: "Modify line 2 - Version A"
+        prompt: |
+          Edit test.txt and change ONLY line 2 from "World" to "Universe"
+          Keep all other lines unchanged.
+        dependencies: ["create-file"]
+      
+      - id: "modify-line2-b"
+        name: "Modify line 2 - Version B"
+        prompt: |
+          Edit test.txt and change ONLY line 2 from "World" to "Galaxy"
+          Keep all other lines unchanged.
+        dependencies: ["create-file"]

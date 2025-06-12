@@ -1,0 +1,6 @@
+name: Sequential Update Test
+description: Test sequential updates with dependencies
+
+execution:
+  output_dir: ./output
+  max_concurrent: 3

@@ -1,0 +1,60 @@
+project:
+  name: "シンプルなWebAPIプロジェクト"
+  description: "RESTful APIのサンプル実装"
+
+phases:
+  - id: "design"
+    name: "設計フェーズ"
+    tasks:
+      - id: "design-001"
+        name: "プロジェクト構造の設計"
+        prompt: |
+          Use the Write tool to create a file called project_structure.md for a simple REST API project.
+          Include:
+          - Directory structure for a Python FastAPI project
+          - Main components: models, routes, services
+          - Configuration and database setup
+        dependencies: []
+        
+      - id: "design-002"
+        name: "APIエンドポイント設計"
+        prompt: |
+          Use the Write tool to create an API specification document called api_spec.md with the following endpoints:
+          - GET /items - List all items
+          - POST /items - Create new item
+          - GET /items/{id} - Get item by ID
+          - PUT /items/{id} - Update item
+          - DELETE /items/{id} - Delete item
+          Use OpenAPI/Swagger format basics.
+        dependencies: []
+
+  - id: "implementation"
+    name: "実装フェーズ"
+    depends_on_phase: "design"
+    tasks:
+      - id: "impl-001"
+        name: "データモデルの実装"
+        prompt: |
+          Use the Write tool to create a Python file called models.py with:
+          - Pydantic model for Item with fields: id (int), name (str), description (str), price (float)
+          - Validation rules for the model
+        dependencies: []
+        
+      - id: "impl-002"
+        name: "APIルートの実装"
+        prompt: |
+          Use the Write tool to create a Python file called routes.py with FastAPI routes for:
+          - Basic CRUD operations for items
+          - Use the Item model from models.py
+          - Include proper status codes and error handling
+        dependencies: ["impl-001"]
+        
+      - id: "impl-003"
+        name: "メインアプリケーションの実装"
+        prompt: |
+          Use the Write tool to create a main.py file that:
+          - Initializes FastAPI app
+          - Includes the routes
+          - Adds CORS middleware
+          - Has a health check endpoint at GET /health
+        dependencies: ["impl-002"]

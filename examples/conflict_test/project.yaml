@@ -1,0 +1,54 @@
+name: "Conflict Test Project"
+description: "複数のタスクが同じファイル名を生成してコンフリクトをテスト"
+phases:
+  - id: "phase1"
+    name: "Model Implementation"
+    tasks:
+      - id: "model-v1"
+        name: "Initial Model"
+        prompt: |
+          Create a simple Python data model for a User with the following fields:
+          - id (int)
+          - name (str)
+          - email (str)
+          
+          Save it as models.py
+      
+      - id: "model-v2"
+        name: "Enhanced Model"
+        prompt: |
+          Create an enhanced Python data model for a User with:
+          - id (UUID)
+          - name (str)
+          - email (str with validation)
+          - created_at (datetime)
+          - is_active (bool)
+          
+          Use Pydantic for validation.
+          Save it as models.py
+        dependencies: ["model-v1"]  # v1の後に実行
+
+  - id: "phase2"
+    name: "API Implementation"
+    depends_on: "phase1"
+    tasks:
+      - id: "api-simple"
+        name: "Simple API"
+        prompt: |
+          Create a simple FastAPI application with a single endpoint:
+          GET /users - returns a list of users
+          
+          Save it as main.py
+      
+      - id: "api-full"
+        name: "Full API"
+        prompt: |
+          Create a complete FastAPI application with CRUD endpoints:
+          - GET /users
+          - GET /users/{id}
+          - POST /users
+          - PUT /users/{id}
+          - DELETE /users/{id}
+          
+          Save it as main.py
+        dependencies: ["api-simple"]

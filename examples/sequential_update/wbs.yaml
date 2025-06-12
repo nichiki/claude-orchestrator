@@ -1,0 +1,33 @@
+name: "Sequential Update Test"
+description: "Test sequential updates with dependencies"
+execution:
+  shared_context: true
+phases:
+  - id: "sequential"
+    name: "Sequential Phase"
+    tasks:
+      - id: "create-file"
+        name: "Create initial file"
+        prompt: |
+          Create a file named counter.txt with the following content:
+          Count: 0
+          Status: initialized
+        dependencies: []
+      
+      - id: "increment-1"
+        name: "First increment"
+        prompt: |
+          Modify counter.txt: Change "Count: 0" to "Count: 1" and "Status: initialized" to "Status: running".
+        dependencies: ["create-file"]
+      
+      - id: "increment-2"
+        name: "Second increment"
+        prompt: |
+          Modify counter.txt: Change "Count: 1" to "Count: 2" while keeping the status as "running".
+        dependencies: ["increment-1"]
+      
+      - id: "finalize"
+        name: "Finalize counter"
+        prompt: |
+          Modify counter.txt: Change "Count: 2" to "Count: 3" and "Status: running" to "Status: completed".
+        dependencies: ["increment-2"]

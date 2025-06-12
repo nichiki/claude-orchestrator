@@ -1,0 +1,51 @@
+name: "Shared Context Test"
+description: "Demonstrates shared context feature with import dependencies"
+shared_context: true
+
+tasks:
+  - id: "create-models"
+    description: "Create models.py with User class"
+    expected_output: "Python module with User model"
+    artifacts:
+      - type: "code"
+        path: "models.py"
+        description: "User model definition"
+    prompt: |
+      Create a models.py file with a simple User class that has:
+      - id (int)
+      - name (str) 
+      - email (str)
+      - __init__ method
+      - __repr__ method
+
+  - id: "create-database"
+    description: "Create database.py that imports and uses User model"
+    expected_output: "Database module that imports models"
+    dependencies: ["create-models"]
+    artifacts:
+      - type: "code"
+        path: "database.py"
+        description: "Database operations using User model"
+    prompt: |
+      Create a database.py file that:
+      - Imports User from models
+      - Has a simple in-memory database (list)
+      - Has functions: add_user(user), get_user(id), get_all_users()
+      - The functions should work with the User model from models.py
+
+  - id: "create-main"
+    description: "Create main.py that uses both modules"
+    expected_output: "Main application that imports both modules"
+    dependencies: ["create-models", "create-database"]
+    artifacts:
+      - type: "code"
+        path: "main.py"
+        description: "Main application demonstrating imports"
+    prompt: |
+      Create a main.py file that:
+      - Imports User from models
+      - Imports database functions from database
+      - Creates a few User instances
+      - Adds them to the database
+      - Retrieves and prints all users
+      - Include if __name__ == "__main__": block

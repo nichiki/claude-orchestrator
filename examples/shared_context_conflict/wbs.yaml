@@ -1,0 +1,57 @@
+name: "Shared Context Conflict Test"
+description: "Tests conflict resolution when multiple tasks modify the same file"
+execution:
+  shared_context: true
+phases:
+  - id: "implementation"
+    name: "Implementation Phase"
+    tasks:
+      - id: "create-base-config"
+        name: "Create base configuration file"
+        prompt: |
+          Create a config.py file with:
+          ```python
+          # Application Configuration
+          
+          APP_NAME = "MyApp"
+          VERSION = "1.0.0"
+          DEBUG = False
+          
+          # Database settings
+          DATABASE = {
+              "host": "localhost",
+              "port": 5432,
+              "name": "myapp_db"
+          }
+          ```
+        dependencies: []
+      
+      - id: "add-api-config"
+        name: "Add API configuration"
+        prompt: |
+          Modify config.py to add API configuration after the DATABASE section:
+          ```python
+          # API settings
+          API_KEY = "default-key"
+          API_TIMEOUT = 30
+          API_BASE_URL = "https://api.example.com"
+          ```
+        dependencies: ["create-base-config"]
+      
+      - id: "add-cache-config"
+        name: "Add cache configuration"
+        prompt: |
+          Modify config.py to add cache configuration after the DATABASE section:
+          ```python
+          # Cache settings
+          CACHE_ENABLED = True
+          CACHE_TTL = 3600
+          CACHE_BACKEND = "redis"
+          ```
+        dependencies: ["create-base-config"]
+      
+      - id: "update-debug-mode"
+        name: "Enable debug mode"
+        prompt: |
+          Modify config.py to change DEBUG from False to True
+        dependencies: ["create-base-config"]
