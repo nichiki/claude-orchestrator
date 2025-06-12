@@ -30,6 +30,7 @@ orchestrator.log
 *.log
 state.json
 .claude/
+base_snapshots/
 
 # OS
 .DS_Store

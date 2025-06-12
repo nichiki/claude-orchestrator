@@ -199,3 +199,39 @@ class TestArtifactManager:
             files = artifacts.get_files()
             assert "main.py" in files
             assert "helper.py" in files
+    
+    def test_base_file_saving(self):
+        """ベースファイルの保存と取得のテスト"""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            workspace_dir = Path(tmpdir)
+            manager = ArtifactManager(workspace_dir=workspace_dir)
+            
+            # 共有ワークスペースにファイルを作成
+            shared_dir = workspace_dir / "shared"
+            shared_dir.mkdir(parents=True, exist_ok=True)
+            test_file = shared_dir / "test.py"
+            test_file.write_text("original content")
+            
+            # タスクワークスペースを準備
+            task_id = "test_task_1"
+            task_workspace = manager.prepare_task_workspace(task_id)
+            
+            # ベースファイルが保存されているか確認
+            base_file = manager._get_base_file(task_id, "test.py")
+            assert base_file is not None
+            assert base_file.exists()
+            assert base_file.read_text() == "original content"
+    
+    def test_base_file_not_saved_for_empty_workspace(self):
+        """空のワークスペースではベースファイルが保存されないことのテスト"""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            workspace_dir = Path(tmpdir)
+            manager = ArtifactManager(workspace_dir=workspace_dir)
+            
+            # 空のワークスペースを準備
+            task_id = "test_task_empty"
+            task_workspace = manager.prepare_task_workspace(task_id)
+            
+            # ベースファイルディレクトリが作成されていないことを確認
+            base_dir = manager.base_snapshots_dir / task_id
+            assert not base_dir.exists()

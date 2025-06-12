@@ -63,6 +63,7 @@ class ArtifactManager:
         self.workspace_dir = workspace_dir or Path("workspace")
         self.shared_workspace = self.workspace_dir / "shared"
         self.task_snapshots: Dict[str, Dict[str, FileMetadata]] = {}  # task_id -> snapshot
+        self.base_snapshots_dir = self.workspace_dir / "base_snapshots"  # ベースファイル保存用ディレクトリ
         
         if storage_path and storage_path.exists():
             self._load_registry()
@@ -323,6 +324,57 @@ class ArtifactManager:
                     
         return snapshot
     
+    def _save_base_files(self, task_id: str, workspace: Path):
+        """タスク開始時のファイル状態を保存
+        
+        Args:
+            task_id: タスクID
+            workspace: タスクワークスペース
+        """
+        # 保存すべきファイルがあるかチェック
+        files_to_save = []
+        for file_path in workspace.rglob("*"):
+            if file_path.is_file():
+                # 除外パターン
+                if any(pattern in str(file_path) for pattern in ['.git', '__pycache__', '.claude']):
+                    continue
+                files_to_save.append(file_path)
+        
+        # ファイルがない場合は何もしない
+        if not files_to_save:
+            logger.debug(f"No files to save as base for task {task_id}")
+            return
+            
+        task_base_dir = self.base_snapshots_dir / task_id
+        task_base_dir.mkdir(parents=True, exist_ok=True)
+        
+        # ファイルをコピー
+        for file_path in files_to_save:
+            rel_path = file_path.relative_to(workspace)
+            base_file_path = task_base_dir / rel_path
+            base_file_path.parent.mkdir(parents=True, exist_ok=True)
+            
+            # ファイルをコピー
+            shutil.copy2(file_path, base_file_path)
+            logger.debug(f"Saved base file: {rel_path}")
+                
+        logger.info(f"Saved {len(files_to_save)} base files for task {task_id} in {task_base_dir}")
+    
+    def _get_base_file(self, task_id: str, relative_path: str) -> Optional[Path]:
+        """保存されたベースファイルを取得
+        
+        Args:
+            task_id: タスクID
+            relative_path: ワークスペースからの相対パス
+            
+        Returns:
+            ベースファイルのパス（存在しない場合はNone）
+        """
+        base_file_path = self.base_snapshots_dir / task_id / relative_path
+        if base_file_path.exists():
+            return base_file_path
+        return None
+    
     def prepare_task_workspace(self, task_id: str) -> Path:
         """タスク用ワークスペースを準備（共有コンテキストのコピー含む）
         
@@ -374,6 +426,9 @@ class ArtifactManager:
             
         # スナップショットを記録
         self.task_snapshots[task_id] = self._create_snapshot(task_workspace)
+        
+        # ベースファイルを保存
+        self._save_base_files(task_id, task_workspace)
         
         return task_workspace
     
@@ -460,16 +515,16 @@ class ArtifactManager:
                     if conflict_resolver:
                         logger.info(f"Attempting 3-way merge for {filepath}")
                         
-                        # ベースファイルの内容を取得（存在しない場合は空）
-                        base_content = ""
+                        # ベースファイルを取得
+                        base_file = None
                         if filepath in base_snapshot:
-                            # ベースファイルを一時的に復元する必要がある場合の処理
-                            # 現在は簡易実装
-                            pass
+                            base_file = self._get_base_file(task_id, filepath)
+                            if base_file:
+                                logger.debug(f"Found base file for {filepath}")
                             
                         # 3-wayマージを実行
                         resolution = await conflict_resolver.resolve_three_way_conflict(
-                            base_file=None,  # 現在は簡易実装
+                            base_file=base_file,
                             shared_file=dst_file,
                             task_file=src_file,
                             task_id=task_id,
