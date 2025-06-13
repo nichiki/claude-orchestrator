@@ -1,6 +1,6 @@
 # AI駆動プロジェクト実行システム - 開発状況
 
-最終更新: 2025-06-12（共有コンテキスト機能の完全実装）
+最終更新: 2025-06-13（Claude Code SDK調査）
 
 ## 概要
 
@@ -79,6 +79,59 @@ WBS（Work Breakdown Structure）を基にしたAI駆動のプロジェクト自
   - Orchestrator: 5テスト
   - ArtifactManager: 8テスト
   - ArtifactIntegration: 3テスト（非同期対応）
+
+## 最新の調査と確認（2025-06-13）
+
+### Claude Code SDKについて
+
+AnthropicがリリースしたClaude Code SDKを調査しました。
+
+#### SDKの概要
+- **インストール**: `pip install claude-code-sdk`
+- **本質**: `claude --print`コマンドのPythonラッパー
+- **実行方式**: 内部でClaudeをsubprocessとして起動
+
+#### 現在の実装との比較
+
+**現在の実装（`TaskExecutor`）**:
+```python
+# subprocess で直接実行
+process = await asyncio.create_subprocess_exec(
+    claude_path, "--print", task["prompt"],
+    cwd=str(task_dir),
+    stdout=subprocess.PIPE,
+    stderr=subprocess.PIPE
+)
+```
+
+**SDK を使った場合**:
+```python
+from claude_code_sdk import query, ClaudeCodeOptions
+
+async for message in query(
+    prompt=task["prompt"],
+    options=ClaudeCodeOptions(
+        cwd=task_dir,
+        max_turns=1,
+        allowed_tools=["Read", "Write", "Bash"]
+    )
+):
+    # 結果処理
+```
+
+#### SDKの利点
+1. **構造化されたメッセージ管理**: 会話履歴や複数ターンの対話をサポート
+2. **組み込みエラーハンドリング**: より堅牢なエラー処理
+3. **MCPツール統合**: Model Context Protocolによる拡張性
+4. **型安全性**: TypeScriptとPythonの両方で型定義を提供
+
+#### 移行の判断
+現在の実装も十分機能していますが、SDKへの移行により以下の改善が期待できます：
+- サブプロセス管理コードの削減
+- エラーハンドリングの標準化
+- 将来的な機能拡張への対応
+
+優先度は中程度とし、他の重要な改善が完了した後に取り組むことを推奨します。
 
 ## 最新の実装（2025-06-12）
 
@@ -263,13 +316,26 @@ TASK（タスク結果）:  Line 2: Galaxy   （task-bの変更）
 - カスタムタスクタイプの定義
 - 再利用可能なタスクライブラリ
 
+### 6. Claude Code SDKへの移行検討（2025-06-13調査）
+- **現状**: `subprocess`で`claude --print`を直接実行
+- **SDK利点**:
+  - エラーハンドリングが組み込み済み
+  - 会話履歴管理機能
+  - MCPツール統合のサポート
+  - より型安全なインターフェース
+- **移行の効果**:
+  - `TaskExecutor`のコード簡素化
+  - より堅牢なエラー処理
+  - 将来的な機能拡張への対応が容易
+
 ## 次のステップの提案
 
 1. **短期的改善**
    - ~~共有コンテキストの基本実装~~ ✅ 完了
+   - ~~ベースファイル保存機能の実装（3-wayマージの完全対応）~~ ✅ 完了
    - WBS生成プロンプトの改善
    - エラーメッセージの改善
-   - ベースファイル保存機能の実装（3-wayマージの完全対応）
+   - Claude Code SDKへの移行（優先度: 中）
 
 2. **中期的目標**
    - WebUIの実装
@@ -286,7 +352,7 @@ TASK（タスク結果）:  Line 2: Galaxy   （task-bの変更）
 1. ~~**import問題**: タスクが独立実行されるため、生成されたファイル間でimportができない~~ ✅ 共有コンテキスト機能で解決
 2. **タイムアウト**: 大きなタスクやマージ処理に時間がかかる場合がある
 3. **Claude Codeの制限**: `--print`オプションでは`-f`（ファイル参照）が使えない
-4. **ベースファイルの保存**: 現在の実装では3-wayマージ時のベースファイル内容が保存されていない（簡易実装）
+4. ~~**ベースファイルの保存**: 現在の実装では3-wayマージ時のベースファイル内容が保存されていない（簡易実装）~~ ✅ 解決済み
 
 ## 成功事例
 
